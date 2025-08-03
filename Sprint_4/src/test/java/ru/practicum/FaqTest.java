@@ -47,6 +47,7 @@ private final String expectedAnswer;
         MainPage mainPage = new MainPage(driver);
 
         mainPage.openMainPage();
+        mainPage.acceptCookiesIfPresent();
 
         mainPage.clickOnFaqQuestionButton(questionIndex);
         String actualAnswer = mainPage.getAnswerText(questionIndex);
