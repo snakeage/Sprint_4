@@ -16,6 +16,7 @@ import static ru.practicum.util.EnvConfig.EXPLICITY_TIMEOUT;
 public class OrderPage {
 
     private final WebDriver driver;
+    // Локаторы полей формы заказа
     private final By firstName = By.cssSelector("input[placeholder='* Имя']");
     private final By lastName = By.cssSelector("input[placeholder='* Фамилия']");
     private final By address = By.cssSelector("input[placeholder='* Адрес: куда привезти заказ']");
@@ -30,32 +31,40 @@ public class OrderPage {
     private final By orderButton = By.xpath("//div[@class='Order_Buttons__1xGrp']/button[text()='Заказать']");
     private final By yesButtonToConfirmOrderScooter = By.xpath("//button[text()='Да']");
     private final By orderConfirmationModal = By.cssSelector(".Order_ModalHeader__3FDaJ");
-
-
+    private final By nextButton = By.xpath("//button[contains(@class, 'Button_Button__ra12g') and contains(@class, 'Button_Middle__1CSJM') and text()='Далее']");
+    // Шаблон xpath для выбора дня в календаре (в формате строки с подстановкой числа дня)
+    private static final String DAY_IN_CALENDAR_XPATH_TEMPLATE =
+            "//div[contains(@class,'react-datepicker__day') and text()='%d' and not(contains(@class,'react-datepicker__day--outside-month'))]";
+    // Текст комментария по умолчанию для заказа
+    private static final String DEFAULT_COMMENT = "Нужен не битый.";
 
 
     public OrderPage(WebDriver driver) {
         this.driver = driver;
     }
 
+    // Кликает кнопку "Далее" на форме заказа
     public void clickNextButton() {
-        By nextButton = By.xpath("//button[contains(@class, 'Button_Button__ra12g') and contains(@class, 'Button_Middle__1CSJM') and text()='Далее']");
         new WebDriverWait(driver, Duration.ofSeconds(EXPLICITY_TIMEOUT))
                 .until(ExpectedConditions.elementToBeClickable(nextButton)).click();
     }
 
+    // Ввод имени
     public void setFirstName(String firstName) {
         driver.findElement(this.firstName).sendKeys(firstName);
     }
 
+    // Ввод фамилии
     public void setLastName(String lastName) {
         driver.findElement(this.lastName).sendKeys(lastName);
     }
 
+    // Ввод адреса доставки
     public void setAddress(String address) {
         driver.findElement(this.address).sendKeys(address);
     }
 
+    // Ввод станции метро и выбор из подсказок
     public void setSubwayStation(String subwayStation) {
         driver.findElement(this.subwayStation).sendKeys(subwayStation);
         WebElement element = new WebDriverWait(driver, Duration.ofSeconds(EXPLICITY_TIMEOUT))
@@ -63,10 +72,12 @@ public class OrderPage {
         element.click();
     }
 
+    // Ввод номера телефона
     public void setPhoneNumber(String phoneNumber) {
         driver.findElement(this.phoneNumber).sendKeys(phoneNumber);
     }
 
+    // Заполнение основных полей формы заказа
     public void fillOrderForm(String firstName, String lastName, String address, String subwayStation, String phoneNumber) {
         setFirstName(firstName);
         setLastName(lastName);
@@ -76,44 +87,52 @@ public class OrderPage {
     }
 
 
+    // Выбирает дату "завтра" в календаре
 public void setTomorrowDate() {
     WebElement dateField = driver.findElement(dateInput);
     dateField.click();
 
     int tomorrowDay = LocalDate.now().plusDays(1).getDayOfMonth();
 
-    String dayXpath = String.format(
-            "//div[contains(@class,'react-datepicker__day') and text()='%d' and not(contains(@class,'react-datepicker__day--outside-month'))]",
-            tomorrowDay);
-
     WebElement dayElement = new WebDriverWait(driver, Duration.ofSeconds(EXPLICITY_TIMEOUT))
-            .until(ExpectedConditions.elementToBeClickable(By.xpath(dayXpath)));
+            .until(ExpectedConditions.elementToBeClickable(getDayInCalendarLocator(tomorrowDay)));
     dayElement.click();
 }
 
+    // Формирует локатор по дню для календаря
+private By getDayInCalendarLocator(int day) {
+        return By.xpath(String.format(DAY_IN_CALENDAR_XPATH_TEMPLATE, day));
+}
 
+
+    // Выбор длительности аренды (первая опция)
     public void selectRentDuration() {
         driver.findElement(rentDurationDropdown).click();
         driver.findElement(firstRentOption).click();
 
     }
 
+    // Выбор цвета (черный чекбокс)
     public void setColor() {
         driver.findElement(blackCheckbox).click();
     }
 
-    public void setComment() {
-        driver.findElement(comment).sendKeys("Нужен не битый.");
+    // Ввод комментария для курьера
+    public void setComment(String commentText) {
+        driver.findElement(comment).sendKeys(commentText);
     }
 
+    // Клик по кнопке "Заказать"
     public void clickOrderButton() {
         driver.findElement(orderButton).click();
     }
 
+    // Подтверждение заказа (кнопка "Да" в модалке)
     public void clickConfirmOrderButton() {
     driver.findElement(yesButtonToConfirmOrderScooter).click();
     }
 
+    // Проверка, что заказ успешно оформлен — появляется модальное окно с номером заказа
     public boolean isOrderConfirmed() {
         try {
             WebElement modal = new WebDriverWait(driver, Duration.ofSeconds(EXPLICITY_TIMEOUT))
@@ -124,18 +143,16 @@ public void setTomorrowDate() {
         }
     }
 
-    public void orderSqooter() {
+    // Полный сценарий оформления заказа самоката
+    public void orderScooter() {
         setTomorrowDate();
         selectRentDuration();
         setColor();
-        setComment();
+        setComment(DEFAULT_COMMENT);
         clickOrderButton();
         clickConfirmOrderButton();
 
         assertTrue("Модалка 'Заказ оформлен' не появилась", isOrderConfirmed());
     }
-
-
-
 
 }

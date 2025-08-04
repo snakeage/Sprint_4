@@ -28,7 +28,7 @@ public class DriverFactory extends ExternalResource {
     private void startChrome() {
         driver = new ChromeDriver();
         driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(IMPLICITY_TIMEOUT));
-        driver.manage().window().fullscreen();
+        driver.manage().window().maximize();
     }
 
     private void startFirefox() {
